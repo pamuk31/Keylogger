@@ -17,14 +17,8 @@ jobs:
       - name: Build Release
         run: cmake --build build --config Release
 
-      - name: Copy runtime DLLs
-        shell: pwsh
-        run: |
-          Copy-Item "C:\Windows\System32\vcruntime140.dll" -Destination "build\Release\"
-          Copy-Item "C:\Windows\System32\msvcp140.dll" -Destination "build\Release\"
-
-      - name: Upload artifact (exe + DLLs)
+      - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
           name: keylogger-windows
-          path: build/Release/
+          path: build/Release/keylogger.exe
