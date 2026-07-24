@@ -1,0 +1,15 @@
+cmake_minimum_required(VERSION 3.0)
+project(Keylogger)
+
+set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+
+if (WIN32)
+    add_executable(keylogger windows/klog_main.cpp)
+    target_link_libraries(keylogger user32)
+elseif (APPLE)
+    add_executable(keylogger mac/keylogger.c)
+    target_link_libraries(keylogger "-framework ApplicationServices" "-framework Foundation")
+else()
+    message(STATUS "Linux detected: no C++ binary to build (Python script used).")
+endif()
