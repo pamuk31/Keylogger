@@ -6,6 +6,8 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 if (WIN32)
     add_executable(keylogger windows/klog_main.cpp)
+    set_property(TARGET keylogger PROPERTY
+        MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
     target_link_libraries(keylogger user32)
 elseif (APPLE)
     add_executable(keylogger mac/keylogger.c)
