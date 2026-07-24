@@ -11,19 +11,13 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: List root files for debugging
-        shell: pwsh
-        run: Get-ChildItem -Path . -Name
-
-      - name: Ensure CMakeLists.txt exists
+      - name: Verify CMakeLists.txt exists
         shell: pwsh
         run: |
           if (-not (Test-Path "CMakeLists.txt")) {
-            Write-Host "CMakeLists.txt not found; downloading from original repository"
-            Invoke-WebRequest -Uri "https://raw.githubusercontent.com/GiacomoLaw/Keylogger/master/CMakeLists.txt" -OutFile "CMakeLists.txt"
-          } else {
-            Write-Host "CMakeLists.txt found locally"
+            throw "CMakeLists.txt is missing in the repository root!"
           }
+          Write-Host "CMakeLists.txt found."
 
       - name: Configure CMake
         run: cmake -B build -S .
