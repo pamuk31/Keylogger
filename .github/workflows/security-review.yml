@@ -1,0 +1,99 @@
+name: Safe Static Review
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  windows-syntax-check:
+    name: Windows C++ syntax check
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+
+      - name: Locate Visual Studio
+        shell: pwsh
+        run: |
+          $vswhere = "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe"
+
+          if (-not (Test-Path $vswhere)) {
+            throw "vswhere.exe was not found."
+          }
+
+          $installationPath = & $vswhere `
+            -latest `
+            -products * `
+            -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 `
+            -property installationPath
+
+          if (-not $installationPath) {
+            throw "Visual C++ Build Tools were not found."
+          }
+
+          "VS_PATH=$installationPath" >> $env:GITHUB_ENV
+          Write-Host "Visual Studio found at: $installationPath"
+
+      - name: Check source syntax without producing a binary
+        shell: cmd
+        run: |
+          call "%VS_PATH%\Common7\Tools\VsDevCmd.bat" -arch=x64
+          cl /nologo /EHsc /W4 /Zs windows\klog_main.cpp
+
+      - name: Confirm no executable was produced
+        shell: pwsh
+        run: |
+          $outputs = Get-ChildItem -Recurse -File |
+            Where-Object { $_.Extension -in ".exe", ".dll", ".obj" }
+
+          if ($outputs) {
+            $outputs | ForEach-Object { Write-Host $_.FullName }
+            throw "Unexpected compiled output was produced."
+          }
+
+          Write-Host "No EXE, DLL, or OBJ file was produced."
+
+  cross-platform-static-review:
+    name: Static source review
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+
+      - name: Install cppcheck
+        run: |
+          sudo apt-get update
+          sudo apt-get install --yes cppcheck
+
+      - name: Analyze Windows source
+        run: |
+          cppcheck \
+            --enable=warning,style,performance,portability \
+            --std=c++11 \
+            --platform=win64 \
+            --suppress=missingIncludeSystem \
+            windows/klog_main.cpp
+
+      - name: Analyze macOS source
+        run: |
+          cppcheck \
+            --enable=warning,style,performance,portability \
+            --std=c11 \
+            --platform=unix64 \
+            --suppress=missingIncludeSystem \
+            mac/keylogger.c
+
+      - name: Parse Linux Python source without executing it
+        run: |
+          python3 - <<'PY'
+          import ast
+          from pathlib import Path
+
+          source = Path("linux/keylogger.py")
+          ast.parse(source.read_text(encoding="utf-8"), filename=str(source))
+          print(f"Python syntax OK: {source}")
+          PY
