@@ -11,14 +11,6 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Verify CMakeLists.txt exists
-        shell: pwsh
-        run: |
-          if (-not (Test-Path "CMakeLists.txt")) {
-            throw "CMakeLists.txt is missing in the repository root!"
-          }
-          Write-Host "CMakeLists.txt found."
-
       - name: Configure CMake
         run: cmake -B build -S .
 
